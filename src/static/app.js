@@ -101,7 +101,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Only a server-verified cookie session can restore sign-in.
   function checkAuthentication() {
     localStorage.removeItem("currentUser");
-    validateUserSession();
+    loginButton.disabled = true;
+    validateUserSession().finally(() => {
+      loginButton.disabled = false;
+    });
     updateAuthBodyClass();
   }
 
