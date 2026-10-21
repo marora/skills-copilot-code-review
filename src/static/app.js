@@ -98,45 +98,32 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchActivities();
   }
 
-  // Check if user is already logged in (from localStorage)
+  // Only a server-verified cookie session can restore sign-in.
   function checkAuthentication() {
-    const savedUser = localStorage.getItem("currentUser");
-    if (savedUser) {
-      try {
-        currentUser = JSON.parse(savedUser);
-        updateAuthUI();
-        // Verify the stored user with the server
-        validateUserSession(currentUser.username);
-      } catch (error) {
-        console.error("Error parsing saved user", error);
-        logout(); // Clear invalid data
-      }
-    }
-
-    // Set authentication class on body
+    localStorage.removeItem("currentUser");
+    validateUserSession();
     updateAuthBodyClass();
   }
 
   // Validate user session with the server
-  async function validateUserSession(username) {
+  async function validateUserSession() {
     try {
-      const response = await fetch(
-        `/auth/check-session?username=${encodeURIComponent(username)}`
-      );
+      const response = await fetch("/auth/check-session", { cache: "no-store" });
 
       if (!response.ok) {
-        // Session invalid, log out
-        logout();
+        if (response.status !== 401) {
+          showMessage("Could not restore your session. Please sign in again.", "error");
+        }
         return;
       }
 
       // Session is valid, update user data
       const userData = await response.json();
       currentUser = userData;
-      localStorage.setItem("currentUser", JSON.stringify(userData));
       updateAuthUI();
     } catch (error) {
       console.error("Error validating session:", error);
+      showMessage("Could not verify your session. Please try signing in.", "error");
     }
   }
 
@@ -153,6 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateAuthBodyClass();
+    document.dispatchEvent(new CustomEvent("auth-changed", { detail: { signedIn: Boolean(currentUser) } }));
     // Refresh the activities to update the UI
     fetchActivities();
   }
@@ -169,14 +157,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Login function
   async function login(username, password) {
     try {
-      const response = await fetch(
-        `/auth/login?username=${encodeURIComponent(
-          username
-        )}&password=${encodeURIComponent(password)}`,
-        {
-          method: "POST",
-        }
-      );
+      const response = await fetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
       const data = await response.json();
 
@@ -190,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Login successful
       currentUser = data;
-      localStorage.setItem("currentUser", JSON.stringify(data));
       updateAuthUI();
       closeLoginModalHandler();
       showMessage(`Welcome, ${currentUser.display_name}!`, "success");
@@ -203,12 +187,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Logout function
-  function logout() {
+  async function logout() {
+    try {
+      const response = await fetch("/auth/logout", { method: "POST" });
+      if (!response.ok) {
+        showMessage("Could not sign out. Please try again.", "error");
+        return;
+      }
+    } catch (error) {
+      console.error("Error signing out:", error);
+      showMessage("Could not sign out. Please check your connection.", "error");
+      return;
+    }
     currentUser = null;
     localStorage.removeItem("currentUser");
     updateAuthUI();
     showMessage("You have been logged out.", "info");
   }
+
+  document.addEventListener("session-expired", () => {
+    currentUser = null;
+    updateAuthUI();
+    showMessage("Your session has expired. Please sign in again.", "info");
+  });
 
   // Show message in login modal
   function showLoginMessage(text, type) {

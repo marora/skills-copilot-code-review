@@ -12,13 +12,14 @@
     />
   </head>
   <body>
-    <div class="announcement-banner">
-      📢 Activity registration is open until the end of the month. Don't lose your spot!
-    </div>
+    <div id="announcements-banner" class="hidden" aria-label="School announcements" role="region" aria-live="polite"></div>
     <header>
       <h1>Mergington High School</h1>
       <h2>Extracurricular Activities</h2>
       <div id="user-controls">
+        <button id="manage-announcements" class="icon-button hidden" type="button" aria-haspopup="dialog">
+          <span aria-hidden="true">📢</span> Announcements
+        </button>
         <div id="user-status">
           <button id="login-button" class="icon-button">
             <span class="user-icon">👤</span>
@@ -137,6 +138,53 @@
       </div>
     </div>
 
+    <dialog id="announcements-dialog" aria-labelledby="announcements-title" aria-describedby="announcements-description">
+      <div class="announcements-heading">
+        <div>
+          <p class="eyebrow">SCHOOL NOTICEBOARD</p>
+          <h2 id="announcements-title">Announcements</h2>
+          <p id="announcements-description">Keep your school community in the loop.</p>
+        </div>
+        <button id="close-announcements" class="quiet-button" type="button" aria-label="Close announcements">✕</button>
+      </div>
+      <div id="announcements-feedback" class="hidden message" role="status" aria-live="polite"></div>
+      <div class="announcements-layout">
+        <div class="announcements-library" aria-labelledby="announcements-library-title">
+          <div class="announcements-section-heading">
+            <h3 id="announcements-library-title">All announcements <span id="announcements-count"></span></h3>
+            <button id="new-announcement" type="button">+ New</button>
+          </div>
+          <div id="announcements-list" aria-live="polite"></div>
+          <button id="retry-announcements" class="quiet-button hidden" type="button">Try loading again</button>
+        </div>
+        <form id="announcement-form" class="announcement-editor">
+          <fieldset id="announcement-fields">
+            <legend id="announcement-editor-title">New announcement</legend>
+            <div class="form-group">
+              <label for="announcement-message">Message <span class="required-label">(required)</span></label>
+              <textarea id="announcement-message" rows="5" maxlength="1000" required placeholder="What would you like everyone to know?" aria-describedby="announcement-message-help"></textarea>
+              <small id="announcement-message-help">Plain text, up to 1,000 characters. Visible to everyone when active.</small>
+            </div>
+            <div class="form-group">
+              <label for="announcement-start">Start date <span class="required-label">(optional)</span></label>
+              <input id="announcement-start" type="date" aria-describedby="announcement-date-help" />
+            </div>
+            <div class="form-group">
+              <label for="announcement-expiration">Expiration date <span class="required-label">(required)</span></label>
+              <input id="announcement-expiration" type="date" required aria-describedby="announcement-date-help" />
+              <small id="announcement-date-help">Leave start blank to publish immediately. Messages stay visible through the expiration day. All dates use UTC.</small>
+            </div>
+            <div id="announcement-preview" class="announcement-preview" aria-live="polite">Choose an expiration date to set your publishing schedule.</div>
+            <div class="announcement-form-actions">
+              <button id="save-announcement" type="submit">Publish announcement</button>
+              <button id="reset-announcement" class="quiet-button" type="button">Clear</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+    </dialog>
+
+    <script src="announcements.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
